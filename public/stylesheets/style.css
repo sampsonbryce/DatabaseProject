@@ -1,0 +1,60 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#map {
+  height: 100%;
+}
+
+a {
+  color: #00B7FF;
+}
+#caspioform{
+  /*display: none;*/
+}
+
+
+.UselessStuff{
+  /*display: none;*/
+}
+
+.Button{
+  display: block;
+  color:black;
+  height:40px;
+  border:1px solid black;
+  padding:10px;
+  width:100px;
+  text-align: center;
+  cursor:pointer;
+}
+.Button:hover{
+  background: gray;
+}
+.modal-trigger{
+  display: block;
+}
+/* Negate materialize*/
+select{
+  display: inline-block;
+}
+
+/* Begin d3 shit */
+.feature {
+  fill: none;
+  stroke: grey;
+  stroke-width: 1px;
+  stroke-linejoin: round;
+}
+.mesh {
+  fill: none;
+  stroke: lightgrey;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+/* End d3 shit */

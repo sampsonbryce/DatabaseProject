@@ -1,0 +1,62 @@
+<h2>University Data: CINS 370</h2>
+
+<button type="button" id='get-data'>Get data</button>
+
+<script>
+
+var access_token = "";
+var resource_endpoint = "https://c3ezh371.caspio.com/rest/v1";
+
+$(function(){
+  $('#get-data').click(function(){
+    getData();
+  });
+  var token_endpoint = "https://c3ezh371.caspio.com/oauth/token";
+  var client_id = "e60813adffb14ad5c35e4d88209d8147537d443b6af845ec05";
+  var client_secret = "8160618d0ca44ccab634786da88bbceb562d344f4ada870c56";
+  var body = "grant_type=client_credentials&client_id=" + client_id + "&client_secret=" + client_secret;
+  console.log('body:', body)
+
+  $.ajax({
+    method: "POST",
+    url: token_endpoint,
+    data: body,
+    success: function(data, status){
+      console.log('success', data);
+      access_token = data.access_token;
+    },
+    error: function (jqXHR, status, error){
+      console.log('error');
+    }
+  });
+});
+
+function getURL(attributes){
+  return resource_endpoint + attributes;
+}
+
+function getData(){
+  var universities_where_json = {
+      "Select":"Name"
+  }
+  //"Where": "Name LIKE '+California+'"
+  var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
+  var request_universities_with_bedroom_1_data = "/views/UniversityBedroom1/rows"
+  console.log("REQUEST:", request_universities);
+
+  $.ajax({
+    headers: {
+      "Authorization": "Bearer " + access_token
+    },
+    method: 'GET',
+    url: getURL(request_universities_with_bedroom_1_data),
+    success: function(data, status){
+      console.log("got data:", data);
+    },
+    error: function(jqXHR, status, error){
+      console.log("error in getting data");
+    }
+  });
+}
+</script>
+<script src="/javascripts/us-d3.js"></script>
