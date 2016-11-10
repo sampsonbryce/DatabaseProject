@@ -45,7 +45,7 @@ select{
 }
 
 /* Begin d3 shit */
-.feature {
+/*.feature {
   fill: none;
   stroke: grey;
   stroke-width: 1px;
@@ -56,5 +56,11 @@ select{
   stroke: lightgrey;
   stroke-width: 2px;
   stroke-linejoin: round;
+}*/
+path {
+  fill: none;
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 /* End d3 shit */

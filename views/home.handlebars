@@ -2,20 +2,34 @@
 
 <button type="button" id='get-data'>Get data</button>
 
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1doWI8TifYyjryVBUf8PUDKoLNNgWwkk">
+</script>
 <script>
+
+var coordinates = [];
 
 var access_token = "";
 var resource_endpoint = "https://c3ezh371.caspio.com/rest/v1";
 
+
+
+
 $(function(){
+
+
   $('#get-data').click(function(){
     getData();
   });
+
+
+
+
+
   var token_endpoint = "https://c3ezh371.caspio.com/oauth/token";
   var client_id = "e60813adffb14ad5c35e4d88209d8147537d443b6af845ec05";
   var client_secret = "8160618d0ca44ccab634786da88bbceb562d344f4ada870c56";
   var body = "grant_type=client_credentials&client_id=" + client_id + "&client_secret=" + client_secret;
-  console.log('body:', body)
 
   $.ajax({
     method: "POST",
@@ -36,27 +50,79 @@ function getURL(attributes){
 }
 
 function getData(){
+  var calls = 8;
   var universities_where_json = {
-      "Select":"Name"
+    "Select":"ZIP",
+    "limit": 1000
   }
-  //"Where": "Name LIKE '+California+'"
   var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
   var request_universities_with_bedroom_1_data = "/views/UniversityBedroom1/rows"
-  console.log("REQUEST:", request_universities);
+  var return_count = 0;
 
-  $.ajax({
-    headers: {
-      "Authorization": "Bearer " + access_token
-    },
-    method: 'GET',
-    url: getURL(request_universities_with_bedroom_1_data),
-    success: function(data, status){
-      console.log("got data:", data);
-    },
-    error: function(jqXHR, status, error){
-      console.log("error in getting data");
+  //Loop to get all data cause 1000 limit
+  for(var i = 1; i <= calls; i++){
+    // var universities_where_json = {
+    //   "Select":"ROW_NUMBER() OVER (ORDER BY University.ZIP) 'rn', ZIP",
+    //   "where": "rn BETWEEN " + 1000*(i-1) + " AND " + 1000*(i-1),
+    //   "Order By": "University.Zip",
+    //   // "Offset": (1000*i).toString(),
+    //   "limit": 1000
+    // }
+      // "From": "Select rownum from University order_by ZIP ASC",
+    // var universities_where_json = {
+    //   "Select":"ZIP",
+    //   "Order By": "ZIP",
+    //   "Offset": 1000 * (i-1) + " Rows",
+    //   "Fetch": "Next 1000 rows only",
+    //   "limit": 1000
+    // }
+    var universities_where_json = {
+      "Select":"ZIP",
+      "WHERE": "ZIP BETWEEN " + 1250*(i-1) + " AND " + 1250*i,
+      "limit": 1000
     }
-  });
+    var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
+
+    $.ajax({
+      headers: {
+        "Authorization": "Bearer " + access_token
+      },
+      method: 'GET',
+      url: getURL(request_universities),
+      success: function(data, status){
+        console.log("got data:", data);
+        return_count += 1;
+        if(return_count == 8){
+          getLatLon(data, true);
+        }
+        else{
+          getLatLon(data, false);
+        }
+      },
+      error: function(jqXHR, status, error){
+        console.log("error in getting data:", jqXHR.responseText);
+      }
+    });
+  }
+}
+
+function getLatLon(data, build){
+  var zip;
+  var expected_count = (data.Result.length)-1;
+
+  for(var i = 0; i < data.Result.length; i++){
+    zip = data.Result[i].ZIP.toString();
+    coords = zip_obj[zip];
+    console.log('zip', zip, coords);
+    if (coords){
+      // console.log(coords);
+      coordinates.push(coords);
+    }
+  }
+  if(build){
+    buildMap(coordinates);
+  }
 }
 </script>
 <script src="/javascripts/us-d3.js"></script>
+<script src='/javascripts/zip_code_obj.js'></script>
