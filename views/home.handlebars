@@ -1,39 +1,53 @@
-<h2>University Data: CINS 370</h2>
+<div class='container'>
+  <div class='row'>
+    <h2>University Data: CINS 370</h2>
+  </div>
 
-<label>Visualize:</label><a class='dropdown-button btn' href='#' data-activates='dropdown1'>Bedroom Count</a>
-
-<ul id='dropdown1' class='dropdown-content'>
-  <li><a href="#!">One</a></li>
-  <li><a href="#!">Two</a></li>
-  <li><a href="#!">Three</a></li>
-</ul>
-
-<button type="button" id='get-data'>Get data</button>
+  <div class='row'>
+    <div class="input-field col s4">
+      <select id='data-dropdown'>
+        <option value="" disabled selected>Choose Data</option>
+        <option value="1">1 Bedroom</option>
+        <option value="2">2 Bedroom</option>
+        <option value="3">3 Bedroom</option>
+      </select>
+    </div>
+  </div>
+  <a class="waves-effect waves-light btn" id='get-data'>Get Data</a>
+  <div class='map'>  
+  </div>
+</div>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1doWI8TifYyjryVBUf8PUDKoLNNgWwkk"></script>
 <script>
 
 // global vars
-var coordinates = [];
+var coordinates = {};
 var access_token = "";
 var resource_endpoint = "https://c3ezh371.caspio.com/rest/v1";
+var color_attribute;
+var table = true;
 
 
 $(function(){
 
   // bind click events
-  $('#dropdown1 li:nth-child(1) > a').click(function(event){
+  $('#data-dropdown').change(function(event){
+    var el = $(event.target);
+    switch(parseInt(el.val())){
+      case 1:
+        color_attribute = 'Bedroom_1_a201607';
+        table = false;
+        break;
+      case 2:
+        break;
+      case 3:
+        break;
+      default:
+        break;
+    }
     event.preventDefault();
   });
-  $('#dropdown1 li:nth-child(2) > a').click(function(event){
-    console.log('clicked2');
-    event.preventDefault();
-  });
-  $('#dropdown1 li:nth-child(3) > a').click(function(event){
-    console.log('clicked3');
-    event.preventDefault();
-  });
-
 
   $('#get-data').click(function(){
     getData();
@@ -68,29 +82,34 @@ function getURL(attributes){
 
 function getData(){
   var calls = 8;
-  var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
-  var request_universities_with_bedroom_1_data = "/views/UniversityBedroom1/rows"
+  // var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
+  // var request_universities_with_bedroom_1_data = "/views/UniversityBedroom1/rows"
+  //
   var return_count = 0;
 
   //Loop to get all data cause 1000 limit
   for(var i = 1; i <= calls; i++){
-    // var universities_where_json = {
-    //   "Select":"University_ZIP, Bedroom_1_a201607",
-    //   "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
-    //   "limit": 1000
-    // }
+    var universities_where_json = {
+      "Select":"University_ZIP, " + color_attribute,
+      "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
+      "limit": 1000
+    }
     //   var universities_where_json = {
     //   "Select":"University_ZIP",
     //   "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
     //   "limit": 1000
     // }
-    var universities_where_json = {
-      "Select":"ZIP",
-      "WHERE": "ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
-      "limit": 1000
+    // var universities_where_json = {
+    //   "Select":"ZIP",
+    //   "WHERE": "ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
+    //   "limit": 1000
+    // }
+    if(!table){
+      var request_universities = '/views/UniversityBedroom1/rows?q=' + JSON.stringify(universities_where_json);
     }
-    // var request_universities = '/views/UniversityBedroom1/rows?q=' + JSON.stringify(universities_where_json);
-    var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
+    else{
+      var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
+    }
 
     $.ajax({
       headers: {
@@ -120,23 +139,37 @@ function getLatLon(data, build){
   var expected_count = (data.Result.length)-1;
 
   for(var i = 0; i < data.Result.length; i++){
-    // zip = data.Result[i].University_ZIP.toString();
-    zip = data.Result[i].ZIP.toString();
-    console.log('got result')
-    coords = zip_obj[zip];
-    console.log('zip', zip, coords);
-    if (coords){
-      // console.log('pushing var');
-      // var variable = data.Result[i].Bedroom_1_a201607;
-      // console.log('var:', variable);
-      // coords.push(variable);
+    zip = data.Result[i].University_ZIP.toString();
+    // zip = data.Result[i].ZIP.toString();
+    // console.log('got result')
+    latlon = zip_obj[zip];
+    // console.log('zip', zip, latlon);
+    if (latlon){
+      var key = latlon[1] - latlon[0];
+      if (coordinates[key])
+      {
+        coordinates[key].density += 1
+      }
+      else{
+        var variable = data.Result[i][color_attribute];
+        var coords_obj = {
+          lat: latlon[1],
+          lon: latlon[0],
+          color_attribute: variable,
+          density: 1
+        }
+        coordinates[key] = coords_obj;
+      }
       // console.log(coords);
-      coordinates.push(coords);
     }
   }
   if(build){
-    console.log("COORDS SIZE", coordinates.length);
-    buildMap(coordinates);
+    //convert to array
+    coordinates_array = $.map(coordinates, function(value, index){
+      return [value];
+    });
+    console.log("COORDS SIZE", Object.keys(coordinates).length);
+    buildMap(coordinates_array, 'density');
   }
 }
 </script>
