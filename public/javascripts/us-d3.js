@@ -1,33 +1,3 @@
-// var width = 960,
-// height = 600;
-//
-// var path = d3.geo.path()
-// .projection(null);
-//
-// var svg = d3.select("body").append("svg")
-// .attr("width", width)
-// .attr("height", height);
-//
-// d3.json("build/counties.json", function(error, us) {
-//   if (error) return console.error(error);
-//
-//   svg.append("path")
-//   .datum(topojson.mesh(us))
-//   .attr("d", path);
-//
-//   aa = [-122.490402, 37.786453];
-//   bb = [-122.389809, 37.72728];
-//
-//   // add circles to svg
-//   svg.selectAll("circle")
-//   .data([aa,bb]).enter()
-//   .append("circle")
-//   .attr("cx", function (d) { console.log("LOGGING", projection(d)); return projection(d)[0]; })
-//   .attr("cy", function (d) { return projection(d)[1]; })
-//   .attr("r", "8px")
-//   .attr("fill", "red")
-//
-// });
 function buildMap(coord_array){
 
   var width = 950,
@@ -52,14 +22,7 @@ function buildMap(coord_array){
     .attr("width", width)
     .attr("height", height);
 
-    // points
-    // aa = [-122.490402, 37.786453];
-    // bb = [-122.389809, 37.72728];
-    //
-    // console.log(projection(aa),projection(bb));
-    // var color = d3.scale.linear().domain([1, 5]).range(1000, 10000);
-    // var color = d3.scale.linear().domain([1, 5]).range(0, 7000);
-    var color = d3.scale.linear().domain([0, 7000]).range(0, 5);
+    var color = d3.scale.linear().domain([0, 7000]).range([0, 5]);
 
     // add states from topojson
     svg.selectAll("path")
@@ -77,13 +40,14 @@ function buildMap(coord_array){
     // console.log("coords", coord_array);
 
     // add circles to svg
+    console.log("length:", coord_array.length);
     svg.selectAll("circle")
     .data(coord_array).enter()
     .append("circle")
-    .attr("cx", function (d) { /*console.log("LOGGING", projection(d))*/; if(projection(d)){return projection(d)[0];} })
+    .attr("cx", function (d) { console.log("LOGGING", projection(d)); if(projection(d)){return projection(d)[0];} })
     .attr("cy", function (d) { if(projection(d)){return projection(d)[1];}})
     .attr("r", "2px")
-    .attr("fill", function(d, i) { console.log(i, color(i)); return d3.rgb("red").darker(color(i))} )
+    .attr("fill", function(d, i) { /*console.log(d, projection(d));*/ return d3.rgb("red").darker(color(i))} )
 
   });
 

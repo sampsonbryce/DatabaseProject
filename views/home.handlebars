@@ -1,21 +1,38 @@
 <h2>University Data: CINS 370</h2>
 
+<label>Visualize:</label><a class='dropdown-button btn' href='#' data-activates='dropdown1'>Bedroom Count</a>
+
+<ul id='dropdown1' class='dropdown-content'>
+  <li><a href="#!">One</a></li>
+  <li><a href="#!">Two</a></li>
+  <li><a href="#!">Three</a></li>
+</ul>
+
 <button type="button" id='get-data'>Get data</button>
 
-<script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1doWI8TifYyjryVBUf8PUDKoLNNgWwkk">
-</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1doWI8TifYyjryVBUf8PUDKoLNNgWwkk"></script>
 <script>
 
+// global vars
 var coordinates = [];
-
 var access_token = "";
 var resource_endpoint = "https://c3ezh371.caspio.com/rest/v1";
 
 
-
-
 $(function(){
+
+  // bind click events
+  $('#dropdown1 li:nth-child(1) > a').click(function(event){
+    event.preventDefault();
+  });
+  $('#dropdown1 li:nth-child(2) > a').click(function(event){
+    console.log('clicked2');
+    event.preventDefault();
+  });
+  $('#dropdown1 li:nth-child(3) > a').click(function(event){
+    console.log('clicked3');
+    event.preventDefault();
+  });
 
 
   $('#get-data').click(function(){
@@ -51,10 +68,6 @@ function getURL(attributes){
 
 function getData(){
   var calls = 8;
-  var universities_where_json = {
-    "Select":"ZIP",
-    "limit": 1000
-  }
   var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
   var request_universities_with_bedroom_1_data = "/views/UniversityBedroom1/rows"
   var return_count = 0;
@@ -62,25 +75,21 @@ function getData(){
   //Loop to get all data cause 1000 limit
   for(var i = 1; i <= calls; i++){
     // var universities_where_json = {
-    //   "Select":"ROW_NUMBER() OVER (ORDER BY University.ZIP) 'rn', ZIP",
-    //   "where": "rn BETWEEN " + 1000*(i-1) + " AND " + 1000*(i-1),
-    //   "Order By": "University.Zip",
-    //   // "Offset": (1000*i).toString(),
+    //   "Select":"University_ZIP, Bedroom_1_a201607",
+    //   "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
     //   "limit": 1000
     // }
-      // "From": "Select rownum from University order_by ZIP ASC",
-    // var universities_where_json = {
-    //   "Select":"ZIP",
-    //   "Order By": "ZIP",
-    //   "Offset": 1000 * (i-1) + " Rows",
-    //   "Fetch": "Next 1000 rows only",
+    //   var universities_where_json = {
+    //   "Select":"University_ZIP",
+    //   "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
     //   "limit": 1000
     // }
     var universities_where_json = {
       "Select":"ZIP",
-      "WHERE": "ZIP BETWEEN " + 1250*(i-1) + " AND " + 1250*i,
+      "WHERE": "ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
       "limit": 1000
     }
+    // var request_universities = '/views/UniversityBedroom1/rows?q=' + JSON.stringify(universities_where_json);
     var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
 
     $.ajax({
@@ -111,15 +120,22 @@ function getLatLon(data, build){
   var expected_count = (data.Result.length)-1;
 
   for(var i = 0; i < data.Result.length; i++){
+    // zip = data.Result[i].University_ZIP.toString();
     zip = data.Result[i].ZIP.toString();
+    console.log('got result')
     coords = zip_obj[zip];
     console.log('zip', zip, coords);
     if (coords){
+      // console.log('pushing var');
+      // var variable = data.Result[i].Bedroom_1_a201607;
+      // console.log('var:', variable);
+      // coords.push(variable);
       // console.log(coords);
       coordinates.push(coords);
     }
   }
   if(build){
+    console.log("COORDS SIZE", coordinates.length);
     buildMap(coordinates);
   }
 }
