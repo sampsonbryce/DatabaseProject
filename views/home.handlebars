@@ -10,11 +10,19 @@
         <option value="1">1 Bedroom</option>
         <option value="2">2 Bedroom</option>
         <option value="3">3 Bedroom</option>
+        <option value="4">Tuiton Fee</option>
+      </select>
+    </div>
+
+    <div class="input-field col s4">
+      <select id='color-dropdown'>
+        <option value="1" selected>Density</option>
+        <option value="2">Cost</option>
       </select>
     </div>
   </div>
   <a class="waves-effect waves-light btn" id='get-data'>Get Data</a>
-  <div class='map'>  
+  <div class='map'>
   </div>
 </div>
 
@@ -27,6 +35,8 @@ var access_token = "";
 var resource_endpoint = "https://c3ezh371.caspio.com/rest/v1";
 var color_attribute;
 var table = true;
+var color_filter = "density";
+var zip_attribute;
 
 
 $(function(){
@@ -36,12 +46,39 @@ $(function(){
     var el = $(event.target);
     switch(parseInt(el.val())){
       case 1:
+        console.log('changing to bedroom1')
+        zip_attribute = 'University_ZIP';
         color_attribute = 'Bedroom_1_a201607';
         table = false;
+        $('#color-dropdown').attr('disabled', false);
         break;
       case 2:
         break;
       case 3:
+        break;
+      case 4:
+        $('#color-dropdown').attr('disabled', true);
+        zip_attribute = 'ZIP';
+        color_attribute = 'TUITIONFEE_IN';
+        table = true;
+      default:
+        break;
+    }
+
+    color_filter = 'density';
+    $('#color-dropdown').val(1);
+    event.preventDefault();
+  });
+
+  $('#color-dropdown').change(function(event){
+    var el = $(event.target);
+    switch(parseInt(el.val())){
+      case 1:
+        color_filter = 'density';
+        break;
+      case 2:
+        console.log('setting to color attribute:', color_attribute);
+        color_filter = color_attribute;
         break;
       default:
         break;
@@ -53,10 +90,6 @@ $(function(){
     getData();
   });
 
-
-
-
-
   var token_endpoint = "https://c3ezh371.caspio.com/oauth/token";
   var client_id = "e60813adffb14ad5c35e4d88209d8147537d443b6af845ec05";
   var client_secret = "8160618d0ca44ccab634786da88bbceb562d344f4ada870c56";
@@ -67,7 +100,7 @@ $(function(){
     url: token_endpoint,
     data: body,
     success: function(data, status){
-      console.log('success', data);
+      // console.log('success', data);
       access_token = data.access_token;
     },
     error: function (jqXHR, status, error){
@@ -81,35 +114,36 @@ function getURL(attributes){
 }
 
 function getData(){
+  console.log('Attributes color, zip, table, color_filter:',color_attribute, zip_attribute, table, color_filter);
+
   var calls = 8;
-  // var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
-  // var request_universities_with_bedroom_1_data = "/views/UniversityBedroom1/rows"
-  //
   var return_count = 0;
 
   //Loop to get all data cause 1000 limit
   for(var i = 1; i <= calls; i++){
-    var universities_where_json = {
-      "Select":"University_ZIP, " + color_attribute,
-      "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
-      "limit": 1000
-    }
-    //   var universities_where_json = {
-    //   "Select":"University_ZIP",
-    //   "WHERE": "University_ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
-    //   "limit": 1000
-    // }
-    // var universities_where_json = {
-    //   "Select":"ZIP",
-    //   "WHERE": "ZIP BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
-    //   "limit": 1000
-    // }
     if(!table){
-      var request_universities = '/views/UniversityBedroom1/rows?q=' + JSON.stringify(universities_where_json);
+      var request_universities = '/views/UniversityBedroom1/rows?q=';
     }
     else{
       var request_universities = '/tables/University/rows?q=' + JSON.stringify(universities_where_json);
     }
+
+    // build query
+    var select_statement = zip_attribute + ', ' + color_attribute;
+    var universities_where_json = {
+      "Select": select_statement,
+      "WHERE": zip_attribute + " BETWEEN " + 12500*(i-1) + " AND " + 12500*i,
+      "limit": 1000
+    }
+
+    // Attach to request url
+    if(!table){
+      var request_universities = '/views/UniversityBedroom1/rows?q=';
+    }
+    else{
+      var request_universities = '/tables/University/rows?q=';
+    }
+    request_universities += JSON.stringify(universities_where_json)
 
     $.ajax({
       headers: {
@@ -118,7 +152,7 @@ function getData(){
       method: 'GET',
       url: getURL(request_universities),
       success: function(data, status){
-        console.log("got data:", data);
+        // console.log("got data:", data);
         return_count += 1;
         if(return_count == 8){
           getLatLon(data, true);
@@ -139,7 +173,13 @@ function getLatLon(data, build){
   var expected_count = (data.Result.length)-1;
 
   for(var i = 0; i < data.Result.length; i++){
-    zip = data.Result[i].University_ZIP.toString();
+    zip = data.Result[i][zip_attribute];
+    if (zip != null){
+      zip = zip.toString()
+    }
+    else{
+      continue;
+    }
     // zip = data.Result[i].ZIP.toString();
     // console.log('got result')
     latlon = zip_obj[zip];
@@ -152,15 +192,18 @@ function getLatLon(data, build){
       }
       else{
         var variable = data.Result[i][color_attribute];
+        if(variable == null){
+          continue;
+        }
+        // console.log('Result at i', data.Result[i], variable);
         var coords_obj = {
           lat: latlon[1],
           lon: latlon[0],
-          color_attribute: variable,
           density: 1
         }
+        coords_obj[color_attribute] = variable;
         coordinates[key] = coords_obj;
       }
-      // console.log(coords);
     }
   }
   if(build){
@@ -169,7 +212,7 @@ function getLatLon(data, build){
       return [value];
     });
     console.log("COORDS SIZE", Object.keys(coordinates).length);
-    buildMap(coordinates_array, 'density');
+    buildMap(coordinates_array, color_filter);
   }
 }
 </script>

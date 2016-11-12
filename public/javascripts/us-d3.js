@@ -1,5 +1,5 @@
 function buildMap(coord_array, color_attribute){
-
+  $('.map').empty();
   var width = 950,
   height = 550;
 
@@ -22,8 +22,9 @@ function buildMap(coord_array, color_attribute){
     var svg = d3.select(".map").append("svg")
       .attr("width", width)
       .attr("height", height);
-    var max = d3.max(coord_array, function(d){console.log('scale', d[color_attribute]); return d[color_attribute]})
+    var max = d3.max(coord_array, function(d){ return d[color_attribute]})
     var color = d3.scale.linear().domain([0, max]).range([0, 5]);
+    var scale = d3.scale.linear().domain([0, max]).range([1, 5]);
     console.log('MAX:', max);
     // add states from topojson
     svg.selectAll("path")
@@ -38,18 +39,18 @@ function buildMap(coord_array, color_attribute){
       .datum(topojson.mesh(topo, topo.features, function(a, b) { return a !== b; }))
       .attr("class", "mesh")
       .attr("d", path);
-    console.log("coords", coord_array);
+    // console.log("coords", coord_array);
 
     // add circles to svg
     console.log("length:", coord_array.length);
     svg.selectAll("circle")
       .data(coord_array).enter()
       .append("circle")
-      .attr("cx", function (d) { console.log("LOGGING", projection([d.lon, d.lat]), d); if(projection([d.lon, d.lat])){return projection([d.lon, d.lat])[0];} })
+      .attr("cx", function (d) { /*console.log("LOGGING", projection([d.lon, d.lat]), d);*/ if(projection([d.lon, d.lat])){return projection([d.lon, d.lat])[0];} })
       .attr("cy", function (d) { if(projection([d.lon, d.lat])){return projection([d.lon, d.lat])[1];}})
-      .attr("r", "2px")
-      .attr("fill", function(d, i) { /*console.log(d, projection(d));*/ return d3.rgb("red").darker(color(d.density))} )
-
+      .attr("r", function(d) { if(projection([d.lon, d.lat])){ return Math.pow(2, scale(d[color_attribute])) + "px"}})
+      .attr("fill", function(d, i) { /*console.log(d, projection(d));*/ return d3.rgb("red").darker(color(d[color_attribute]))})
+      .attr("opacity", 0.5)
   });
 
 }
