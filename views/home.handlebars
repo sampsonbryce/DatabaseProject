@@ -8,22 +8,35 @@
       <select id='data-dropdown'>
         <option value="" disabled selected>Choose Data</option>
         <option value="1">1 Bedroom</option>
-        <option value="2">2 Bedroom</option>
-        <option value="3">3 Bedroom</option>
         <option value="4">Tuiton Fee</option>
+        <option value="5">Average Debt</option>
+        <option value="6">Finacial Aid Given</option>
+        <option value="7">Completion Rate</option>
       </select>
     </div>
 
-    <div class="input-field col s4">
-      <select id='color-dropdown'>
-        <option value="1" selected>Density</option>
-        <option value="2">Cost</option>
-      </select>
+    <div class='input-field col s4'>
+      <form id='scale' action="#">
+        <p>Scale:</p>
+        <p>
+          <input name="scalegroup" type="radio" id="test1" data-percent='.3'/>
+          <label for="test1">30%</label>
+        </p>
+        <p>
+          <input name="scalegroup" type="radio" id="test2" data-percent='.6'/>
+          <label for="test2">60%</label>
+        </p>
+        <p>
+          <input name="scalegroup" type="radio" id="test3" data-percent='1'/>
+          <label for="test3">100%</label>
+        </p>
+      </form>
+    </div>
+    <div class='input-field col s4'>
+      <a class="waves-effect waves-light btn" id='get-data'>Get Data</a>
     </div>
   </div>
-  <a class="waves-effect waves-light btn" id='get-data'>Get Data</a>
-  <div class='map'>
-  </div>
+  <div class='map'></div>
 </div>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC1doWI8TifYyjryVBUf8PUDKoLNNgWwkk"></script>
@@ -35,7 +48,6 @@ var access_token = "";
 var resource_endpoint = "https://c3ezh371.caspio.com/rest/v1";
 var color_attribute;
 var table = true;
-var color_filter = "density";
 var zip_attribute;
 
 
@@ -46,43 +58,33 @@ $(function(){
     var el = $(event.target);
     switch(parseInt(el.val())){
       case 1:
-        console.log('changing to bedroom1')
         zip_attribute = 'University_ZIP';
         color_attribute = 'Bedroom_1_a201607';
         table = false;
-        $('#color-dropdown').attr('disabled', false);
         break;
-      case 2:
-        break;
-      case 3:
-        break;
-      case 4:
-        $('#color-dropdown').attr('disabled', true);
+     case 4:
         zip_attribute = 'ZIP';
         color_attribute = 'TUITIONFEE_IN';
+        table = true;
+      case 5:
+        zip_attribute = 'ZIP';
+        color_attribute = 'Average_debt';
+        table = true;
+        break;
+      case 6:
+        zip_attribute = 'ZIP';
+        color_attribute = 'Aid_percent';
+        table = true;
+        break;
+      case 7:
+        zip_attribute = 'ZIP';
+        color_attribute = 'Completion_rate_4';
         table = true;
       default:
         break;
     }
 
-    color_filter = 'density';
     $('#color-dropdown').val(1);
-    event.preventDefault();
-  });
-
-  $('#color-dropdown').change(function(event){
-    var el = $(event.target);
-    switch(parseInt(el.val())){
-      case 1:
-        color_filter = 'density';
-        break;
-      case 2:
-        console.log('setting to color attribute:', color_attribute);
-        color_filter = color_attribute;
-        break;
-      default:
-        break;
-    }
     event.preventDefault();
   });
 
@@ -100,11 +102,10 @@ $(function(){
     url: token_endpoint,
     data: body,
     success: function(data, status){
-      // console.log('success', data);
       access_token = data.access_token;
     },
     error: function (jqXHR, status, error){
-      console.log('error');
+      alert('error');
     }
   });
 });
@@ -114,7 +115,7 @@ function getURL(attributes){
 }
 
 function getData(){
-  console.log('Attributes color, zip, table, color_filter:',color_attribute, zip_attribute, table, color_filter);
+  coordinates = {};
 
   var calls = 8;
   var return_count = 0;
@@ -152,7 +153,6 @@ function getData(){
       method: 'GET',
       url: getURL(request_universities),
       success: function(data, status){
-        // console.log("got data:", data);
         return_count += 1;
         if(return_count == 8){
           getLatLon(data, true);
@@ -180,10 +180,7 @@ function getLatLon(data, build){
     else{
       continue;
     }
-    // zip = data.Result[i].ZIP.toString();
-    // console.log('got result')
     latlon = zip_obj[zip];
-    // console.log('zip', zip, latlon);
     if (latlon){
       var key = latlon[1] - latlon[0];
       if (coordinates[key])
@@ -195,7 +192,6 @@ function getLatLon(data, build){
         if(variable == null){
           continue;
         }
-        // console.log('Result at i', data.Result[i], variable);
         var coords_obj = {
           lat: latlon[1],
           lon: latlon[0],
@@ -211,8 +207,8 @@ function getLatLon(data, build){
     coordinates_array = $.map(coordinates, function(value, index){
       return [value];
     });
-    console.log("COORDS SIZE", Object.keys(coordinates).length);
-    buildMap(coordinates_array, color_filter);
+    scale_value = $('input[name="scalegroup"]:checked').attr('data-percent');
+    buildMap(coordinates_array, color_attribute, scale_value);
   }
 }
 </script>

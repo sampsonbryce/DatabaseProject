@@ -44,6 +44,11 @@ select{
   display: inline-block;
 }
 
+form#scale p{
+  display: inline-block;
+  vertical-align: top;
+}
+
 /* Begin d3 shit */
 /*.feature {
   fill: none;
